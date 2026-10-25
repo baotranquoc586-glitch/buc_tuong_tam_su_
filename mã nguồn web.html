@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bức tường tâm sự</title>
+<style>
+:root{--ink:#2b2b33;--mut:#6b6b76;--card:#fff;--line:#ffd8a8;--btn:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:17px/1.5 "Patrick Hand","Segoe UI",system-ui,-apple-system,sans-serif;background:radial-gradient(circle at 8% 8%,#ffd6e0 0,transparent 38%),radial-gradient(circle at 92% 18%,#cfeaff 0,transparent 38%),radial-gradient(circle at 50% 100%,#d8ffd0 0,transparent 42%),#fffaf0;background-attachment:fixed}
+header,main{max-width:1000px;margin:auto;padding:12px 16px}
+h1{font-size:2rem;margin:.2em 0;background:linear-gradient(90deg,#ff6b6b,#ff9f43,#1dd1a1,#54a0ff,#a55eea);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mut);margin:0 0 8px}
+/* Khung viết = một tờ note đang viết dở. Màu đổi theo chủ đề (--c do JS gán) */
+.compose{--c:#74c0fc;position:relative;max-width:520px;margin:24px auto 14px;padding:24px 18px 16px;border-radius:4px 4px 18px 4px;background:linear-gradient(160deg,rgba(255,255,255,.4),transparent 55%),var(--c);box-shadow:5px 9px 18px rgba(0,0,0,.22);transform:rotate(-1.2deg);transition:background-color .35s}
+.compose::before{content:"";position:absolute;top:-12px;left:50%;width:84px;height:26px;margin-left:-42px;background:rgba(255,255,255,.6);transform:rotate(-3deg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.compose::after{content:"";position:absolute;right:0;bottom:0;width:30px;height:30px;background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.13) 50%);border-radius:0 0 18px 0}
+.hint{margin:0 0 2px;font-size:.9rem;opacity:.7}
+.lbl{font-size:.95rem;font-weight:600;margin:10px 0 2px;color:#2b2b33}
+input,select,textarea{width:100%;font:inherit;color:#1f3a8a;background:transparent;border:0;border-bottom:2px dashed rgba(0,0,0,.3);border-radius:0;padding:4px 6px;margin:0}
+::placeholder{color:rgba(0,0,0,.38)}
+#ti{font-size:1.25rem}
+.tglist{max-height:172px;overflow-y:auto;overscroll-behavior:contain;padding:6px;border-radius:14px;background:rgba(255,255,255,.3);border:2px dashed rgba(0,0,0,.2);scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.4) transparent}
+.tglist::-webkit-scrollbar{width:8px}
+.tglist::-webkit-scrollbar-thumb{background:rgba(0,0,0,.4);border-radius:8px}
+.tglist .opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:rgba(255,255,255,.55);color:#2b2b33;box-shadow:none;border:2px solid transparent;border-radius:12px;padding:8px 12px;margin:0 0 6px}
+.tglist .opt::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;background:var(--oc);border:2px solid rgba(0,0,0,.25)}
+.tglist .opt.on{background:#fff;border-color:#2b2b33;font-weight:600}
+.tglist .opt.on::after{content:"▴";margin-left:auto}
+.tglist:not(.open){max-height:none;overflow:visible;padding:4px}
+.tglist:not(.open) .opt:not(.on){display:none}
+.tglist:not(.open) .opt{margin:0}
+.tglist:not(.open) .opt.on::after{content:"▾"}
+.tglist:not(.open)+.hint{display:none}
+select{width:auto;max-width:100%;background:rgba(255,255,255,.65);border:2px solid rgba(0,0,0,.18);border-radius:999px;padding:6px 14px;color:#2b2b33}
+input:focus,select:focus,textarea:focus{outline:0;background-color:rgba(255,255,255,.35)}
+textarea{resize:none;overflow-y:auto;line-height:32px;border:0;padding:0 6px;background-image:repeating-linear-gradient(transparent 0,transparent 31px,rgba(0,0,0,.18) 31px,rgba(0,0,0,.18) 32px);background-attachment:local}
+#tx{height:128px}
+.cnt{text-align:right;font-size:.85rem;opacity:.7}
+#go{margin-top:8px}
+/* Bản sao tờ note dùng cho hiệu ứng bay lên tường */
+.flyer{position:absolute;z-index:50;margin:0;max-width:none;pointer-events:none;transition:none}
+.toast{position:fixed;left:16px;right:16px;margin:auto;width:fit-content;bottom:calc(20px + env(safe-area-inset-bottom,0px));background:#e03131;color:#fff;padding:12px 18px;border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,.3);z-index:99;cursor:pointer;animation:rise .4s}
+.rpt{margin-top:6px;font-size:.85rem}
+.rpanel{background:#fff4f4;border:2px solid #ff8787;border-radius:16px;padding:12px;margin:14px 0}
+.ritem{background:#fff;border-radius:12px;padding:8px 10px;margin:8px 0}
+.ritem button{margin:6px 6px 0 0;padding:4px 12px;font-size:.85rem}
+.rmeta{font-size:.85rem;color:#c92a2a;margin-bottom:2px}
+.note textarea{height:80px;line-height:26px;padding:0 10px;border:2px solid rgba(0,0,0,.15);border-radius:10px;background-color:#fff;background-image:repeating-linear-gradient(transparent 0,transparent 25px,#c9dcff 25px,#c9dcff 26px)}
+.note .lbl{font-weight:600;margin:12px 0 4px}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:8px 16px;background:var(--btn);color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.18);transition:transform .15s}
+button:hover{transform:translateY(-2px)}
+button:active{transform:scale(.92)}
+button.ghost{background:#fff;color:var(--ink);border:2px solid #ffd8a8;box-shadow:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px}
+.chips button{white-space:nowrap}
+.chips button.on{background:var(--btn);color:#fff;border-color:var(--btn)}
+#wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:22px;padding:14px 0}
+/* Giấy note: màu từ --c, độ nghiêng từ --rot (mỗi tờ một góc), băng dính ::before, góc gấp ::after */
+.note{position:relative;background:linear-gradient(160deg,rgba(255,255,255,.4),transparent 55%),var(--c);color:var(--ink);border-radius:4px 4px 16px 4px;padding:20px 16px 16px;font-size:1.1rem;box-shadow:4px 7px 14px rgba(0,0,0,.2);cursor:pointer;transform:rotate(var(--rot,0deg));transition:transform .25s cubic-bezier(.3,1.5,.5,1),box-shadow .25s}
+.note::before{content:"";position:absolute;top:-11px;left:50%;width:76px;height:24px;margin-left:-38px;background:rgba(255,255,255,.6);transform:rotate(-3deg);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.note::after{content:"";position:absolute;right:0;bottom:0;width:26px;height:26px;background:linear-gradient(135deg,transparent 50%,rgba(0,0,0,.13) 50%);border-radius:0 0 16px 0}
+.note:hover{transform:rotate(0) translateY(-6px) scale(1.04);box-shadow:6px 14px 22px rgba(0,0,0,.25)}
+.note:active{transform:scale(.95)}
+.note.open{grid-column:1/-1;transform:none;cursor:default;box-shadow:6px 12px 28px rgba(0,0,0,.25)}
+/* Chuyển động: .pop = các tờ bay vào lúc mới tải; .opening = tờ bung ra khi bấm */
+.note.pop{animation:pop .5s cubic-bezier(.3,1.6,.5,1) backwards;animation-delay:calc(var(--i)*70ms)}
+.note.opening{animation:unfold .55s cubic-bezier(.3,1.5,.5,1)}
+.opening .rep,.opening .rx{animation:rise .45s .15s backwards}
+@keyframes pop{from{opacity:0;transform:scale(.4) rotate(-12deg) translateY(30px)}}
+@keyframes unfold{from{transform:scale(.6) rotate(-6deg);opacity:.4}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.note h3{margin:.3em 0;font-size:1.3rem}
+.note .ghost{background:rgba(255,255,255,.7);color:#2b2b33;border-color:rgba(0,0,0,.2)}
+.tag{font-weight:600;font-size:.9rem}
+.meta{font-size:.85rem;opacity:.75}
+.rx{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.rx button{background:rgba(255,255,255,.75);color:#2b2b33;border:1px solid rgba(0,0,0,.12);padding:5px 10px;font-size:.9rem;box-shadow:none}
+.rx button:active{transform:scale(1.3)}
+.rep{background:rgba(255,255,255,.75);border-radius:12px;padding:8px 10px;margin:6px 0;font-size:1rem}
+.rep.pin{border:2px solid #f59f00}
+.rep .ghost{padding:2px 10px;font-size:.8rem;margin:6px 4px 0 0}
+.bdg{background:#1c7ed6;color:#fff;border-radius:99px;padding:1px 8px;font-size:.75rem;margin-left:6px}
+.sos{background:#ffe3e3;color:#7a1212;border-radius:12px;padding:10px;margin:8px 0;font-size:.95rem}
+.err{color:#e03131;font-size:.9rem;margin:4px 0}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+<!-- Thư viện Supabase, ghim đúng phiên bản để trang không bị đổi hành vi ngoài ý muốn -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1/dist/umd/supabase.js"></script>
+</head>
+<body>
+<header>
+  <h1>📌 Bức tường tâm sự</h1>
+  <p class="sub">Viết ẩn danh – được lắng nghe – không bị phán xét.</p>
+  <button class="ghost" id="adm">🔑 Quản trị</button>
+</header>
+<main>
+  <section class="compose" id="compose">
+    <p class="hint">Viết ẩn danh – không cần ghi tên</p>
+    <div class="lbl">Tiêu đề</div>
+    <input id="ti" maxlength="60" placeholder="Viết ngắn gọn điều bạn đang nghĩ…">
+    <div class="lbl">Chủ đề</div>
+    <input type="hidden" id="tg" value="ap">
+    <div class="tglist" id="tglist"></div>
+    <p class="hint">↕ Vuốt lên xuống để chọn chủ đề</p>
+    <div class="lbl">Nội dung</div>
+    <textarea id="tx" rows="4" maxlength="600" placeholder="Bạn muốn tâm sự điều gì? Cứ viết thoải mái nhé…"></textarea>
+    <div class="cnt" id="cnt">0/600</div>
+    <div class="sos" id="sos" hidden></div>
+    <button id="go">📌 Dán lên tường</button>
+    <div class="err" id="er"></div>
+  </section>
+  <section class="rpanel" id="rp" hidden></section>
+  <div class="chips" id="chips"></div>
+  <div id="wall">Đang tải…</div>
+</main>
+<script>
+// ===== BƯỚC 1: dán 2 giá trị từ Supabase (Project Settings > API) =====
+// Chỉ dùng khóa "publishable" (công khai). TUYỆT ĐỐI không dán khóa "secret" hay "service_role" vào đây.
+const SB_URL = "https://zmvswgextwsbvariwbgv.supabase.co";
+const SB_KEY = "sb_publishable_AJOoQek5g9wjIoCYO8hmqg_xMxMfKdU";
+// Kiểm tra cấu hình: báo đúng chỗ sai nhưng KHÔNG dừng trang (đếm ký tự, chọn chủ đề… vẫn chạy)
+let db = null;
+const bad = (() => {
+  if (typeof supabase === "undefined") return "Không tải được thư viện Supabase. Kiểm tra mạng, hoặc mở file bằng Chrome.";
+  if (SB_URL.includes("YOUR-PROJECT")) return "SB_URL vẫn là chữ mẫu. Hãy thay bằng Project URL của bạn rồi LƯU file.";
+  if (SB_KEY.includes("YOUR-PUBLISHABLE")) return "SB_KEY vẫn là chữ mẫu. Hãy thay bằng khóa sb_publishable_… rồi LƯU file.";
+  if (/^sb_secret_|service_role/.test(SB_KEY)) return "Đây là khóa SECRET, tuyệt đối không dùng trong trang web. Hãy dùng khóa publishable.";
+  if (!/^https:\/\/.+\.supabase\.co$/.test(SB_URL.trim())) return "SB_URL chưa đúng dạng https://mã-dự-án.supabase.co (không thừa dấu / ở cuối).";
+  return "";
+})();
+if (bad) document.getElementById("wall").textContent = "⚠️ " + bad; else db = supabase.createClient(SB_URL.trim(), SB_KEY.trim());
+
+const $ = id => document.getElementById(id);
+const h = (tag, attrs = {}, ...kids) => {            // luôn chèn chữ dạng TEXT → chống XSS
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs))
+    k.startsWith("on") ? e.addEventListener(k.slice(2), v) : k === "class" ? e.className = v : e.setAttribute(k, v);
+  e.append(...kids.filter(c => c != null && c !== false));
+  return e;
+};
+const TAGS = {                       // mã chủ đề: [tên hiển thị, màu tờ giấy]
+  ap: ["#ÁpLựcĐiểmSố", "#74c0fc"],
+  bt: ["#ÁpLựcDeadline", "#b197fc"],
+  gd: ["#ÁpLựcGiaĐình", "#8ce99a"],
+  bb: ["#ÁpLựcBạnBè", "#ffa94d"],
+  ht: ["#ThiCửHướngNghiệp", "#66d9e8"],
+  bl: ["#BạoLựcHọcĐường", "#ff8787"],
+  cl: ["#BịCôLập", "#e599f7"],
+  tb: ["#TìnhBạn", "#ffe066"],
+  tc: ["#TìnhCảmTuổiHọcTrò", "#faa2c1"],
+  mx: ["#MạngXãHội", "#38d9a9"],
+  ng: ["#NgoạiHìnhTựTi", "#c0eb75"],
+  sk: ["#StressLoÂuMấtNgủ", "#91a7ff"],
+  kh: ["#Khác", "#dee2e6"]
+};
+const RX = ["🤝 Đồng cảm", "🥺 Thương thương", "💛 Bạn không cô đơn"];
+const SOS = ["tự tử", "tự sát", "muốn chết", "không muốn sống", "tự hại", "kết thúc cuộc đời"];
+const SOS_MSG = "💛 Có vẻ bạn đang rất đau lòng. Bạn không một mình đâu. Hãy gọi 111 (Tổng đài quốc gia bảo vệ trẻ em, miễn phí) hoặc nói ngay với một người lớn bạn tin tưởng.";
+const hasSos = s => SOS.some(w => s.toLowerCase().includes(w));
+const ago = t => { const m = Math.floor((Date.now() - t) / 6e4); return m < 1 ? "vừa xong" : m < 60 ? m + " phút trước" : m < 1440 ? Math.floor(m / 60) + " giờ trước" : Math.floor(m / 1440) + " ngày trước"; };
+
+let posts = [], filter = "all", openId = null, admin = false;
+let intro = true, anim = null;   // intro: hiệu ứng bay vào lần đầu; anim: tờ vừa được bấm mở
+const draft = {};
+
+// ===== BÁO CÁO: người dùng báo nội dung xấu -> quản trị viên xét duyệt =====
+const REASONS = { xuc_pham: "Xúc phạm, chê bai", de_doa: "Đe dọa, bắt nạt", spam: "Spam, quảng cáo", nguy_hiem: "Khuyên điều nguy hiểm", khac: "Lý do khác" };
+let reports = [], reporting = null;
+let reported; try { reported = new Set(JSON.parse(localStorage.getItem("reported")) || []); } catch (e) { reported = new Set(); }
+const saveReported = () => { try { localStorage.setItem("reported", JSON.stringify([...reported])); } catch (e) {} };
+
+// Nút báo cáo: bấm -> chọn lý do -> gửi. (Nhớ trong trình duyệt để không bấm lặp; chặn thật nằm ở máy chủ.)
+function reportUI(key, target) {
+  if (reported.has(key)) return h("div", { class: "rpt" }, "✔ Đã báo cáo, cảm ơn bạn 💛");
+  if (reporting !== key) return h("button", { class: "ghost", onclick: () => { reporting = key; render(); } }, "🚩 Báo cáo");
+  return h("div", { class: "rpt" }, "Lý do báo cáo: ",
+    ...Object.entries(REASONS).map(([k, l]) => h("button", { class: "ghost", onclick: async () => {
+      reported.add(key); reporting = null; saveReported();
+      const m = await run(db.from("reports").insert({ ...target, reason: k }));
+      if (m) { reported.delete(key); saveReported(); render(); alert(m); }
+    } }, l)),
+    h("button", { class: "ghost", onclick: () => { reporting = null; render(); } }, "Hủy"));
+}
+
+// Bảng xét duyệt cho quản trị viên: gom báo cáo theo nội dung, nhiều báo cáo nhất lên đầu
+async function loadReports() {
+  if (!admin) { reports = []; return renderReports(); }
+  const { data, error } = await db.from("reports").select("*, posts(title, body), replies(body, post_id)").order("created_at", { ascending: false });
+  if (!error) reports = data;
+  renderReports();
+}
+// ===== THÔNG BÁO CHO QUẢN TRỊ VIÊN (khi đang mở trang): Realtime báo ngay khi có báo cáo mới =====
+// Máy chủ chỉ gửi sự kiện cho tài khoản được phép đọc bảng reports (quy tắc is_admin trong SQL).
+let rtChan = null, unseen = 0;
+function alertAdmin() {
+  unseen++; document.title = "(" + unseen + ") 🚩 Bức tường tâm sự";
+  const t = h("div", { class: "toast", onclick: () => { t.remove(); $("rp").scrollIntoView({ behavior: "smooth" }); } }, "🚩 Có báo cáo mới – bấm để xem");
+  document.body.append(t); setTimeout(() => t.remove(), 8000);
+  try { if (Notification.permission === "granted") new Notification("🚩 Có báo cáo mới", { body: "Mở Bức tường tâm sự để xét duyệt." }); } catch (e) {}
+}
+function watchReports() {
+  if (rtChan || !admin) return;
+  rtChan = db.channel("reports-watch")
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "reports" }, () => { alertAdmin(); loadReports(); })
+    .subscribe();
+}
+function unwatchReports() { if (rtChan) db.removeChannel(rtChan); rtChan = null; }
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { unseen = 0; document.title = "Bức tường tâm sự"; } });
+
+function renderReports() {
+  const box = $("rp");
+  box.hidden = !admin;
+  if (!admin) return;
+  const g = new Map();
+  for (const r of reports) {
+    const key = r.reply_id ? "r" + r.reply_id : "p" + r.post_id;
+    if (!g.has(key)) g.set(key, { r, n: 0, why: {} });
+    const x = g.get(key); x.n++; x.why[r.reason] = (x.why[r.reason] || 0) + 1;
+  }
+  box.replaceChildren(h("b", {}, "🚩 Báo cáo chờ xét duyệt: " + g.size),
+    ...(g.size ? [...g.values()].sort((a, b) => b.n - a.n).map(({ r, n, why }) => {
+      const isReply = !!r.reply_id, postId = isReply ? r.replies.post_id : r.post_id;
+      const text = isReply ? r.replies.body : r.posts.title + " – " + r.posts.body;
+      return h("div", { class: "ritem" },
+        h("div", { class: "rmeta" }, (isReply ? "Lời khuyên" : "Bài đăng") + " · " + n + " báo cáo: " + Object.entries(why).map(([k, c]) => REASONS[k] + " ×" + c).join(", ")),
+        h("div", {}, text),
+        h("button", { class: "ghost", onclick: () => { filter = "all"; openId = postId; anim = postId; render(); const o = $("wall").querySelector(".note.open"); if (o) o.scrollIntoView({ behavior: "smooth", block: "start" }); } }, "Xem bài"),
+        h("button", { onclick: () => confirm("Xóa nội dung này?") && run(isReply ? db.from("replies").delete().eq("id", r.reply_id) : db.from("posts").delete().eq("id", r.post_id)) }, "Xóa nội dung"),
+        h("button", { class: "ghost", onclick: () => run(db.from("reports").delete().eq(isReply ? "reply_id" : "post_id", isReply ? r.reply_id : r.post_id)) }, "Bỏ qua"));
+    }) : [h("p", { class: "sub" }, "Chưa có báo cáo nào. 🎉")]));
+}
+
+// ===== BƯỚC 2: dữ liệu giờ nằm trên máy chủ. Mọi thao tác = gửi yêu cầu rồi tải lại. =====
+async function load() {
+  const { data, error } = await db.from("posts").select("*, replies(*)").order("created_at", { ascending: false });
+  if (error) { $("wall").textContent = "Không tải được dữ liệu: " + error.message; return; }
+  posts = data; render(); loadReports();
+}
+// run(): chạy một yêu cầu; nếu máy chủ từ chối thì trả về câu báo lỗi, nếu ổn thì tải lại tường.
+async function run(q) { const { error } = await q; if (error) return error.message; await load(); }
+
+function render() {
+  $("chips").replaceChildren(...[["all", "Tất cả"], ...Object.entries(TAGS).map(([k, v]) => [k, v[0]])]
+    .map(([k, n]) => h("button", { class: filter === k ? "on ghost" : "ghost", onclick: () => { filter = k; render(); } }, n)));
+  const w = $("wall");
+  w.replaceChildren(...posts.filter(p => filter === "all" || p.tag === filter).map(card));
+  if (!w.children.length) w.append(h("p", { class: "sub" }, "Chưa có tâm sự nào ở mục này."));
+  if (posts.length) intro = false;
+  anim = null;
+  $("adm").textContent = admin ? "🔑 Đăng xuất quản trị" : "🔑 Quản trị";
+  renderReports();
+}
+
+function card(p, i) {
+  const open = openId === p.id, [tn, tc] = TAGS[p.tag] || TAGS.kh;   // mã lạ thì rơi về “Chủ đề khác”
+  const n = h("article", { class: "note" + (open ? " open" : ""), onclick: () => { if (!open) { openId = p.id; anim = p.id; render(); } } },
+    h("div", { class: "tag" }, tn), h("h3", {}, p.title),
+    h("div", { class: "meta" }, ago(Date.parse(p.created_at)) + " · " + p.replies.length + " lời khuyên"));
+  n.style.setProperty("--c", tc);
+  n.style.setProperty("--rot", ((Number(p.id) % 7) - 3) * 0.8 + "deg");   // mỗi tờ nghiêng một góc khác nhau
+  if (intro) { n.classList.add("pop"); n.style.setProperty("--i", Math.min(i, 12)); }
+  if (open && anim === p.id) n.classList.add("opening");
+  if (!open) return n;
+
+  n.append(h("p", {}, p.body));
+  if (hasSos(p.title + " " + p.body)) n.append(h("div", { class: "sos" }, SOS_MSG));
+  n.append(h("div", { class: "rx" }, ...RX.map((l, i) => h("button", { onclick: () => run(db.rpc("react", { pid: p.id, i })) }, l + " " + p.r[i]))));
+  [...p.replies].sort((a, b) => b.pin - a.pin || a.id - b.id).forEach(r => n.append(replyEl(r)));
+
+  const ta = h("textarea", { rows: 2, maxlength: 300, placeholder: "Viết như một người bạn cùng lớp đang động viên bạn ấy…" });
+  ta.value = draft[p.id] || "";
+  ta.oninput = () => draft[p.id] = ta.value;
+  const er = h("div", { class: "err" });
+  n.append(h("div", { class: "lbl" }, "✏️ Lời khuyên của bạn"), ta, er,
+    h("button", { onclick: async () => {
+      const s = ta.value.trim();
+      if (s.length < 5) return er.textContent = "Lời khuyên hơi ngắn, hãy viết thêm nhé.";
+      draft[p.id] = "";
+      const m = await run(db.from("replies").insert({ post_id: p.id, body: s }));
+      if (m) { draft[p.id] = s; er.textContent = m; }   // m = lời từ chối của máy chủ (vd: từ ngữ không phù hợp)
+    } }, "Gửi lời khuyên"),
+    " ", h("button", { class: "ghost", onclick: () => { openId = null; render(); } }, "✕ Thu gọn"));
+  if (admin) n.append(" ", h("button", { class: "ghost", onclick: () => { openId = null; run(db.from("posts").delete().eq("id", p.id)); } }, "Xóa bài"));
+  else n.append(" ", reportUI("p" + p.id, { post_id: p.id }));   // người thường: nút báo cáo bài đăng
+  return n;
+}
+
+function replyEl(r) {
+  const e = h("div", { class: "rep" + (r.pin ? " pin" : "") }, (r.pin ? "📌 " : "") + r.body, r.expert ? h("span", { class: "bdg" }, "✔ Chuyên gia") : null);
+  // Biến admin chỉ để hiện nút. Người ngoài tự bật cũng vô ích: máy chủ chỉ nghe lệnh của tài khoản quản trị thật.
+  if (admin) e.append(h("div", {}, ...[
+    ["Ghim", () => db.from("replies").update({ pin: !r.pin }).eq("id", r.id)],
+    ["Chuyên gia", () => db.from("replies").update({ expert: !r.expert }).eq("id", r.id)],
+    ["Xóa", () => db.from("replies").delete().eq("id", r.id)]
+  ].map(([l, f]) => h("button", { class: "ghost", onclick: () => run(f()) }, l))));
+  else e.append(reportUI("r" + r.id, { reply_id: r.id }));   // người thường: nút báo cáo lời khuyên
+  return e;
+}
+
+// ===== Đăng bài ẩn danh =====
+const paint = () => $("compose").style.setProperty("--c", TAGS[$("tg").value][1]);   // tờ note đổi màu theo chủ đề
+function pick(k) { $("tg").value = k; paint(); [...$("tglist").children].forEach(b => b.classList.toggle("on", b.dataset.k === k)); }
+$("tglist").replaceChildren(...Object.entries(TAGS).map(([k, v]) => {
+  const b = h("button", { type: "button", class: "opt", onclick: () => {
+    const L = $("tglist");
+    if (L.classList.contains("open")) { pick(k); L.classList.remove("open"); }       // chọn xong thì thu gọn
+    else { L.classList.add("open"); const on = L.querySelector(".on"); if (on) L.scrollTop = on.offsetTop - L.offsetTop - 6; }   // bấm lại để mở ra đổi chủ đề
+  } }, v[0]);
+  b.dataset.k = k; b.style.setProperty("--oc", v[1]); return b;
+}));
+pick("ap"); $("tglist").classList.add("open");   // lần đầu mở sẵn để bạn thấy các lựa chọn
+$("sos").textContent = SOS_MSG;
+$("tx").oninput = $("ti").oninput = () => { $("sos").hidden = !hasSos($("ti").value + " " + $("tx").value); $("cnt").textContent = $("tx").value.length + "/600"; };
+// ===== Hiệu ứng: tờ note bay lên tường rồi dán chặt (Web Animations API) =====
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function stick(from, v) {
+  return new Promise(done => {
+    const target = $("wall").querySelector(".note"), c = $("compose");
+    if (calm || !target || !target.animate) return done();
+    const sx = scrollX, sy = scrollY, tr = target.getBoundingClientRect(), tw = target.offsetWidth, th = target.offsetHeight;
+    const to = { left: tr.left + (tr.width - tw) / 2, top: tr.top + (tr.height - th) / 2 };
+    const rot = target.style.getPropertyValue("--rot") || "0deg";
+    const g = c.cloneNode(true);                                   // bản sao tờ note vừa viết
+    g.querySelectorAll("[id]").forEach(e => e.removeAttribute("id"));
+    g.querySelector("input").value = v.title; g.querySelector("textarea").value = v.body;
+    g.classList.add("flyer");
+    g.style.left = from.left + sx + "px"; g.style.top = from.top + sy + "px"; g.style.width = from.width + "px"; g.style.height = from.height + "px";
+    document.body.append(g);
+    c.style.visibility = "hidden"; target.style.visibility = "hidden";   // tờ thật ẩn đi cho tới khi bản sao hạ cánh
+    [...g.children].forEach(k => k.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: "forwards" }));
+    const dx = to.left + tw / 2 - (from.left + from.width / 2), dy = to.top + th / 2 - (from.top + from.height / 2);
+    const sw = tw / from.width, sh = th / from.height;
+    scrollTo({ top: Math.max(0, to.top + sy - innerHeight / 3), behavior: "smooth" });
+    g.animate([
+      { transform: "rotate(-1.2deg)" },
+      { transform: "translate(0,-30px) scale(1.05) rotate(3deg)", offset: .2 },                                         // nhấc tờ giấy lên
+      { transform: `translate(${dx}px,${dy - 24}px) scale(${sw * 1.1},${sh * 1.1}) rotate(-5deg)`, offset: .78 },       // bay tới tường
+      { transform: `translate(${dx}px,${dy}px) scale(${sw},${sh}) rotate(${rot})` }                                      // áp xuống
+    ], { duration: 950, easing: "cubic-bezier(.5,0,.3,1)", fill: "forwards" }).onfinish = () => {
+      g.remove(); target.style.visibility = "";
+      target.animate([                                                                                                 // “bạch” một cái: dán chặt
+        { transform: `scale(1.14) rotate(${rot})`, boxShadow: "10px 18px 28px rgba(0,0,0,.35)" },
+        { transform: `scale(.96) rotate(${rot})`, offset: .55 },
+        { transform: `scale(1) rotate(${rot})` }
+      ], { duration: 420, easing: "ease-out" });
+      c.style.visibility = "";                                                                                         // tờ note trắng mới trượt lên
+      c.animate([{ opacity: 0, transform: "translateY(50px) rotate(-7deg) scale(.9)" }, { opacity: 1, transform: "rotate(-1.2deg)" }],
+        { duration: 550, delay: 150, easing: "cubic-bezier(.3,1.4,.5,1)", fill: "backwards" });
+      done();
+    };
+  });
+}
+
+$("go").onclick = async () => {
+  if (!db) return $("er").textContent = "⚠️ " + bad;
+  const title = $("ti").value.trim(), body = $("tx").value.trim(), tag = $("tg").value;
+  if (!title || body.length < 10) return $("er").textContent = "Hãy nhập tiêu đề và ít nhất 10 ký tự nội dung nhé.";
+  const c = $("compose"), r = c.getBoundingClientRect(), W = c.offsetWidth, H = c.offsetHeight;
+  const from = { left: r.left + (r.width - W) / 2, top: r.top + (r.height - H) / 2, width: W, height: H };
+  filter = "all"; $("go").disabled = true;
+  const m = await run(db.from("posts").insert({ tag, title, body }));
+  if (m) { $("go").disabled = false; return $("er").textContent = m; }
+  $("er").textContent = ""; $("sos").hidden = true;
+  const flying = stick(from, { title, body, tag });                // tạo bản sao TRƯỚC khi xóa chữ trong form
+  $("ti").value = $("tx").value = ""; $("cnt").textContent = "0/600"; pick("ap"); $("tglist").classList.add("open");   // tờ note trắng mới
+  await flying; $("go").disabled = false;
+};
+
+// ===== Đăng nhập quản trị (tài khoản tạo trong Supabase > Authentication > Users) =====
+$("adm").onclick = async () => {
+  if (!db) return alert(bad);
+  if (admin) { await db.auth.signOut(); admin = false; unwatchReports(); return render(); }
+  if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();   // xin quyền hiện thông báo (cần một lần bấm của người dùng)
+  const email = prompt("Email quản trị:"), password = email && prompt("Mật khẩu:");  // bản demo; trang thật nên làm form riêng
+  if (!password) return;
+  const { error } = await db.auth.signInWithPassword({ email, password });
+  if (error) return alert("Đăng nhập thất bại: " + error.message);
+  admin = true; render(); loadReports(); watchReports();
+};
+if (db) {
+  db.auth.getSession().then(({ data }) => { admin = !!data.session; render(); loadReports(); watchReports(); });
+  load();
+}
+</script>
+</body>
+</html>
